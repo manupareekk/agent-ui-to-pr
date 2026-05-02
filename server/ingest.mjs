@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const dataFile = path.join(root, "data", "events.ndjson");
 const port = Number(process.env.INGEST_PORT || 3847);
+const maxBodyBytes = Number(process.env.INGEST_MAX_BODY_BYTES || 262144);
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -29,8 +30,22 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === "POST" && req.url === "/events") {
     const chunks = [];
-    req.on("data", (c) => chunks.push(c));
+    let total = 0;
+    let aborted = false;
+    req.on("data", (c) => {
+      if (aborted) return;
+      total += c.length;
+      if (total > maxBodyBytes) {
+        aborted = true;
+        res.writeHead(413);
+        res.end("payload too large");
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
     req.on("end", () => {
+      if (aborted) return;
       try {
         const raw = Buffer.concat(chunks).toString("utf8").trim();
         if (!raw) {

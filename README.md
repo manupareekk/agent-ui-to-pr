@@ -26,11 +26,16 @@ Open the URL Vite prints (default **http://localhost:5180**). You should see an 
 
 From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is included with `buildCommand` / `outputDirectory`.
 
+### CI and GitHub Pages
+
+- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci`, default build, **a second build with `VITE_BASE_PATH` set from the repo name** (matches GitHub project Pages URLs), then **`npm run demo:report`**.
+- **Pages** (`.github/workflows/pages.yml`) is **`workflow_dispatch` only** so `main` stays green until you enable **Settings → Pages → GitHub Actions** and run **“Deploy GitHub Pages”** manually once.
+
 ## What is included today
 
 - **A2UI v0.9** surface using `MessageProcessor` + `basicCatalog` (`@a2ui/lit`, `@a2ui/web_core`).
 - **Experiment hook**: `getAssignedVariant()` + `logEvent()` in `src/experiment.ts` (localStorage sticky split).
-- **Integration placeholders** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig stub. Wire env vars from **`.env.example`**.
+- **Integrations** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig (`@statsig/js-client` when `VITE_STATSIG_CLIENT_KEY` is set). Wire env vars from **`.env.example`**.
 - **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
 - **Synthetic traffic**: **`npm run demo:synth`** / **`npm run demo:report`** — generate NDJSON + analyze without the UI (see **`scripts/simulate-traffic.mjs`**).

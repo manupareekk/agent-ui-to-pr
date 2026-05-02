@@ -1,8 +1,9 @@
+# Deploy only when you trigger it (avoids red commits before Pages is enabled).
+# Setup: Repo Settings → Pages → Build: GitHub Actions. Create environment "github-pages" if prompted.
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -30,7 +31,6 @@ jobs:
 
       - name: Build
         env:
-          # Repository Pages URL: https://<owner>.github.io/<repo>/
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
         run: |
           npm ci
@@ -43,6 +43,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

@@ -2,7 +2,7 @@
 /**
  * Reads data/events.ndjson, picks A/B by CTR, enforces min sample, SRM, rage guardrail.
  * Prints human-readable tables to stderr; prints exactly one stdout line:
- *   DECISION_WINNER=A|B   or   DECISION_FAIL=reason
+ *   DECISION_WINNER=A|B   or   DECISION_FAIL=<encodeURIComponent(reason)>
  *
  * Env: MIN_PER_ARM (default 200), SRM_CHI_MAX (default 3.84), GUARDRAIL_RAGE_RATIO (default 1.15)
  */
@@ -20,7 +20,7 @@ const GUARDRAIL_RAGE_RATIO = Number(process.env.GUARDRAIL_RAGE_RATIO || "1.15");
 
 function fail(msg) {
   console.error("DECISION FAILED:", msg);
-  console.log(`DECISION_FAIL=${msg.replace(/=/g, "_")}`);
+  console.log(`DECISION_FAIL=${encodeURIComponent(msg)}`);
   process.exit(1);
 }
 
