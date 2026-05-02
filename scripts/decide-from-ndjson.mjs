@@ -14,9 +14,21 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const dataFile = path.join(root, "data", "events.ndjson");
 
-const MIN_PER_ARM = Number(process.env.MIN_PER_ARM || "200");
-const SRM_CHI_MAX = Number(process.env.SRM_CHI_MAX || "3.84");
-const GUARDRAIL_RAGE_RATIO = Number(process.env.GUARDRAIL_RAGE_RATIO || "1.15");
+function envPosInt(name, def, min = 1) {
+  const v = Number(process.env[name]);
+  if (!Number.isFinite(v) || v < min) return def;
+  return Math.floor(v);
+}
+
+function envPosFloat(name, def, min) {
+  const v = Number(process.env[name]);
+  if (!Number.isFinite(v) || v < min) return def;
+  return v;
+}
+
+const MIN_PER_ARM = envPosInt("MIN_PER_ARM", 200, 1);
+const SRM_CHI_MAX = envPosFloat("SRM_CHI_MAX", 3.84, 0.01);
+const GUARDRAIL_RAGE_RATIO = envPosFloat("GUARDRAIL_RAGE_RATIO", 1.15, 1.001);
 
 function fail(msg) {
   console.error("DECISION FAILED:", msg);

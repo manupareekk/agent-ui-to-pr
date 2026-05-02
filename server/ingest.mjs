@@ -32,6 +32,9 @@ const server = http.createServer((req, res) => {
     const chunks = [];
     let total = 0;
     let aborted = false;
+    req.on("error", () => {
+      aborted = true;
+    });
     req.on("data", (c) => {
       if (aborted) return;
       total += c.length;
@@ -67,6 +70,11 @@ const server = http.createServer((req, res) => {
   }
   res.writeHead(404);
   res.end("POST /events only");
+});
+
+server.on("error", (err) => {
+  console.error("[ingest] server error:", err.message);
+  process.exit(1);
 });
 
 server.listen(port, "127.0.0.1", () => {

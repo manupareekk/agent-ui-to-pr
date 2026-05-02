@@ -23,15 +23,10 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Install and build (default base)
-        run: |
-          npm ci
-          npm run build
+      - name: Install
+        run: npm ci
 
-      - name: Build (GitHub Pages base path)
+      - name: Verify (default + Pages base build + demo pipeline)
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
-        run: npm run build
-
-      - name: Demo report (synth + analyze + decide)
-        run: npm run demo:report
+          VERIFY_VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run verify

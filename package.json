@@ -14,6 +14,7 @@
     "analyze": "node ./analyzer/analyze.mjs",
     "demo:synth": "node ./scripts/simulate-traffic.mjs 3000",
     "demo:report": "node ./scripts/simulate-traffic.mjs 800 --fresh && node ./analyzer/analyze.mjs && node ./scripts/decide-from-ndjson.mjs",
+    "verify": "node ./scripts/verify.mjs",
     "pr:hint": "node ./scripts/open-pr-placeholder.mjs",
     "promote:patch": "node ./scripts/patch-defaults.mjs",
     "build": "tsc -p tsconfig.json && vite build",

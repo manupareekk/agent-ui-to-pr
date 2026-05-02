@@ -20,7 +20,11 @@ const dataFile = path.join(root, "data", "events.ndjson");
 const args = process.argv.slice(2);
 const fresh = args.includes("--fresh");
 const nArg = args.find((a) => a !== "--fresh");
-const n = Math.max(1, parseInt(nArg || "2000", 10) || 2000);
+const parsed = Number.parseInt(String(nArg ?? "").trim(), 10);
+const n = Math.min(
+  5_000_000,
+  Math.max(1, Number.isFinite(parsed) && parsed > 0 ? parsed : 2000),
+);
 
 if (fresh && fs.existsSync(dataFile)) fs.unlinkSync(dataFile);
 

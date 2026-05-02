@@ -41,11 +41,17 @@ jobs:
         id: decide
         run: |
           set -euo pipefail
-          node scripts/decide-from-ndjson.mjs 2> /tmp/decide.err | tee /tmp/decide.out
-          cat /tmp/decide.err
+          node scripts/decide-from-ndjson.mjs > /tmp/decide.out 2> /tmp/decide.err
+          cat /tmp/decide.err >&2
+          if grep -q '^DECISION_FAIL=' /tmp/decide.out; then
+            echo "::error::Decision blocked (see DECISION_FAIL line in stdout above)"
+            cat /tmp/decide.out
+            exit 1
+          fi
           WINNER=$(grep '^DECISION_WINNER=' /tmp/decide.out | tail -1 | cut -d= -f2-)
           if [[ -z "${WINNER}" ]]; then
-            echo "::error::No DECISION_WINNER line (see logs above)"
+            echo "::error::No DECISION_WINNER line"
+            cat /tmp/decide.out
             exit 1
           fi
           echo "winner=${WINNER}" >> "${GITHUB_OUTPUT}"

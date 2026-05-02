@@ -11,7 +11,7 @@ npm install
 npm run demo:report
 ```
 
-That **fabricates a few thousand fake sessions** into `data/events.ndjson`, then prints **variant tables** (B usually wins on clicks — it’s rigged slightly for demos). Real traffic: use `npm run dev:full` + `.env` instead; see below.
+That **fabricates a few thousand fake sessions** into `data/events.ndjson`, then prints **variant tables** (B usually wins on clicks — it’s rigged slightly for demos). To match **CI** locally (two production builds + the same pipeline): `npm run verify`. Real traffic: use `npm run dev:full` + `.env` instead; see below.
 
 ## Quick start (UI)
 
@@ -28,7 +28,7 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 
 ### CI and GitHub Pages
 
-- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci`, default build, **a second build with `VITE_BASE_PATH` set from the repo name** (matches GitHub project Pages URLs), then **`npm run demo:report`**.
+- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci` then **`npm run verify`** (see `scripts/verify.mjs` — default build, second build with `VERIFY_VITE_BASE` / repo name for Pages URLs, then **`npm run demo:report`**).
 - **Pages** (`.github/workflows/pages.yml`) is **`workflow_dispatch` only** so `main` stays green until you enable **Settings → Pages → GitHub Actions** and run **“Deploy GitHub Pages”** manually once.
 
 ## What is included today
