@@ -10,6 +10,7 @@
     "dev:full": "concurrently -k -n web,ingest -c blue,magenta \"npm run dev\" \"npm run dev:ingest\"",
     "analyze": "node ./analyzer/analyze.mjs",
     "pr:hint": "node ./scripts/open-pr-placeholder.mjs",
+    "promote:patch": "node ./scripts/patch-defaults.mjs",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview"
   },

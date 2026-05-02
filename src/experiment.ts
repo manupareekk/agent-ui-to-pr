@@ -9,6 +9,26 @@ const STORAGE_KEY = "a2ui-demo-experiment-demo_cta";
 
 export type DemoVariant = "A" | "B";
 
+/** When set from `public/experiment-defaults.json`, all users get this variant. */
+let remoteWinner: DemoVariant | null = null;
+
+/** Fetch once; call from app shell before first `getAssignedVariant()`. */
+export async function loadExperimentDefaults(): Promise<void> {
+  try {
+    const res = await fetch("/experiment-defaults.json", { cache: "no-store" });
+    if (!res.ok) return;
+    const json = (await res.json()) as { demo_cta?: { winner?: string | null } };
+    const w = json?.demo_cta?.winner;
+    if (w === "A" || w === "B") remoteWinner = w;
+  } catch {
+    /* offline / adblock */
+  }
+}
+
+export function getAssignmentMode(): "remote" | "client" {
+  return remoteWinner ? "remote" : "client";
+}
+
 function stableHash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -32,8 +52,9 @@ export function getSessionId(): string {
   }
 }
 
-/** Sticky assignment for experiment `demo_cta` (50/50 A/B). */
+/** Sticky assignment for experiment `demo_cta` (50/50 A/B), unless repo default wins. */
 export function getAssignedVariant(): DemoVariant {
+  if (remoteWinner) return remoteWinner;
   try {
     const existing = localStorage.getItem(STORAGE_KEY) as DemoVariant | null;
     if (existing === "A" || existing === "B") return existing;
@@ -68,7 +89,7 @@ export function logEvent(name: string, payload?: Record<string, unknown>): void 
     variant: getAssignedVariant(),
     sessionId: getSessionId(),
     name,
-    payload,
+    payload: { ...payload, assignment: getAssignmentMode() },
   };
   buffer.push(ev);
   console.info("[experiment]", ev);

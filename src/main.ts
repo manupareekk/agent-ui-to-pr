@@ -4,7 +4,13 @@ import { MessageProcessor } from "@a2ui/web_core/v0_9";
 import { A2uiSurface, basicCatalog } from "@a2ui/lit/v0_9";
 import { injectBasicCatalogStyles } from "@a2ui/web_core/v0_9/basic_catalog";
 import { buildDemoMessages, SURFACE_ID } from "./demoMessages.js";
-import { drainExperimentLog, getAssignedVariant, logEvent } from "./experiment.js";
+import {
+  drainExperimentLog,
+  getAssignedVariant,
+  loadExperimentDefaults,
+  logEvent,
+  type DemoVariant,
+} from "./experiment.js";
 import { initPosthogFromEnv } from "./integrations/posthog.js";
 
 import type { ComponentApi, SurfaceModel } from "@a2ui/web_core/v0_9";
@@ -68,24 +74,31 @@ export class ExperimentHost extends LitElement {
   private surface: SurfaceModel<ComponentApi> | null = null;
 
   @state()
-  private variant = getAssignedVariant();
+  private variant: DemoVariant | null = null;
 
   connectedCallback(): void {
     super.connectedCallback();
-    injectBasicCatalogStyles();
-    void initPosthogFromEnv();
-    logEvent("surface_exposed", { surfaceId: SURFACE_ID });
+    void loadExperimentDefaults().then(() => {
+      this.variant = getAssignedVariant();
+      injectBasicCatalogStyles();
+      void initPosthogFromEnv();
 
-    this.processor.onSurfaceCreated((s) => {
-      if (s.id === SURFACE_ID) {
-        this.surface = s as SurfaceModel<ComponentApi>;
-      }
+      this.processor.onSurfaceCreated((s) => {
+        if (s.id === SURFACE_ID) {
+          this.surface = s as SurfaceModel<ComponentApi>;
+        }
+      });
+
+      this.processor.processMessages(buildDemoMessages(this.variant) as never[]);
+      logEvent("surface_exposed", { surfaceId: SURFACE_ID });
+      this.requestUpdate();
     });
-
-    this.processor.processMessages(buildDemoMessages(this.variant) as never[]);
   }
 
   render() {
+    if (this.variant === null) {
+      return html`<p>Loading experiment defaults…</p>`;
+    }
     return html`
       <header>
         <span class="pill">Variant ${this.variant}</span>

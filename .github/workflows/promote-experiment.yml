@@ -1,0 +1,60 @@
+name: promote experiment (open PR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      winner:
+        description: "Winning variant for demo_cta (writes public/experiment-defaults.json)"
+        type: choice
+        required: true
+        default: "B"
+        options:
+          - A
+          - B
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-promote-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Patch defaults JSON
+        run: node scripts/patch-defaults.mjs "${{ inputs.winner }}"
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BRANCH="promote/demo-cta-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git add public/experiment-defaults.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          git commit -m "chore(experiments): set demo_cta winner to ${{ inputs.winner }}"
+          git push origin "$BRANCH"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore(experiments): promote demo_cta → variant ${{ inputs.winner }}" \
+            --body "Automated promotion (workflow: \`promote-experiment.yml\`).
+
+**Winner:** \`${{ inputs.winner }}\` for experiment \`demo_cta\`.
+
+**Change:** \`public/experiment-defaults.json\` — the static app fetches this at runtime (\`cache: no-store\`) so new sessions follow the default after deploy.
+
+Review and merge when ready."

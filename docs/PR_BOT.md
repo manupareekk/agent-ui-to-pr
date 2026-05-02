@@ -1,23 +1,29 @@
-# PR bot (placeholder architecture)
+# PR promotion
 
-This repo does **not** open real PRs yet. Intended shape:
+## What works today
 
-1. **Decision input** — JSON or SQL from your analyzer (see `npm run analyze` or PostHog Experiments).
-2. **Policy** — minimum sample size, primary KPI winner, guardrails must pass.
-3. **Patch** — change a small config file (e.g. default variant, copy map, feature flag JSON), not random TSX.
-4. **PR** — GitHub App or `gh` with a token that can push a branch and open a PR.
-5. **CI** — required checks (lint, typecheck) before merge.
+**`.github/workflows/promote-experiment.yml`** — run manually (**Actions → promote experiment → Run workflow**), pick **A** or **B**. It:
 
-### GitHub Actions
+1. Runs `node scripts/patch-defaults.mjs <winner>` (updates `public/experiment-defaults.json`).
+2. Pushes branch `promote/demo-cta-<run_id>` and opens a **pull request** to `main` using `gh` + `github.token`.
 
-See `.github/workflows/experiment-decision.yml` (`workflow_dispatch` stub). Duplicate and add secrets:
+After merge + deploy, the static app fetches `/experiment-defaults.json` with `cache: no-store` and forces that variant for everyone (see `loadExperimentDefaults()` in `src/experiment.ts`).
 
-- `GH_TOKEN` or use `GITHUB_TOKEN` with permissions if same-repo only.
-
-### Local dry run
+### Local patch (no PR)
 
 ```bash
-node scripts/open-pr-placeholder.mjs
+npm run promote:patch -- B
+npm run build
 ```
 
-Replace the script with `octokit` + branch + commit + `createPullRequest` when you are ready.
+## Next upgrades
+
+1. **Decision input** — drive the workflow from `npm run analyze`, PostHog, or BigQuery instead of a manual **winner** input.
+2. **Policy** — minimum sample size + guardrail checks before `patch-defaults`.
+3. **GitHub App** — swap `github.token` for an installation token if you need cross-repo writes.
+
+### Legacy placeholder script
+
+```bash
+npm run pr:hint
+```

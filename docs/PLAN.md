@@ -7,7 +7,7 @@ This document is the **roadmap** you can attach to issues or a LinkedIn post. Ea
 - Render an A2UI v0.9 surface from **static messages** (no LLM).
 - Sticky **A/B** assignment for a single experiment key (`demo_cta`).
 - **Structured logging** to the console + an on-page JSON dump (`logEvent`).
-- **Sink stubs**: PostHog + HTTP ingest + Statsig hook (`src/integrations/`), local **NDJSON** server (`server/ingest.mjs`), **analyzer** script, **GitHub Actions** + **PR bot** docs/scripts under `docs/` and `.github/`.
+- **Sink stubs**: PostHog + HTTP ingest + Statsig hook (`src/integrations/`), local **NDJSON** server (`server/ingest.mjs`), **analyzer** script, **`promote-experiment.yml`** (manual dispatch → real PR patching `public/experiment-defaults.json`), plus docs under `docs/`.
 
 ## Phase 1 — Real product telemetry
 

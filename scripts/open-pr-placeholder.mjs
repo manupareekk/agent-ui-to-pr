@@ -1,16 +1,14 @@
 #!/usr/bin/env node
 /**
- * Placeholder for “promote winning variant” automation.
- * Real version: use `gh pr create` or octokit with a GitHub App installation token.
- *
- *   node scripts/open-pr-placeholder.mjs
+ * Reminder script. Real PR flow: GitHub → Actions → "promote experiment (open PR)".
+ * Or locally: npm run promote:patch -- B && git commit && gh pr create ...
  */
 console.log(`
-Next steps (manual or CI):
-  1. Decide winner from analyzer output or your warehouse.
-  2. Edit src/demoMessages.ts (or move copy to config/*.json) for the default CTA.
-  3. gh pr create --title "chore(experiments): promote demo_cta winner" --body "$(cat decision.md)"
+Promote flow is wired in CI:
+  Repo → Actions → "promote experiment (open PR)" → pick A or B → opens a real PR.
 
-Secrets: GH_TOKEN with contents:write + pull_requests (fine-grained) or a GitHub App.
+Local patch only (no PR):
+  npm run promote:patch -- B
+
 See docs/PR_BOT.md
 `);
