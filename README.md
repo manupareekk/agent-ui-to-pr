@@ -13,6 +13,10 @@ npm run dev
 
 Open the URL Vite prints (default **http://localhost:5180**). You should see an A2UI surface and a **Variant A / B** pill (sticky assignment). Click the primary button and watch the browser console for `[experiment]` lines.
 
+### Deploy (Vercel)
+
+From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is included with `buildCommand` / `outputDirectory`.
+
 ## What is included today
 
 - **A2UI v0.9** surface using `MessageProcessor` + `basicCatalog` (`@a2ui/lit`, `@a2ui/web_core`).
