@@ -34,7 +34,7 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 - **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
 - **Synthetic traffic**: **`npm run demo:synth`** / **`npm run demo:report`** — generate NDJSON + analyze without the UI (see **`scripts/simulate-traffic.mjs`**).
-- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`public/experiment-defaults.json`**, opens a real PR. If it 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
+- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`config/experiment-defaults.json`** (synced to `public/` on `npm run dev` / `build`), opens a real PR. **`.github/workflows/promote-from-data.yml`** runs synthetic traffic + **`scripts/decide-from-ndjson.mjs`** (min-`n`, SRM, rage guardrail) then opens the same style of PR. If Actions 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
 - **Config example**: **`config/`** for future bot-targeted JSON beyond the static `public/` file.
 - **Static demo messages** in `src/demoMessages.ts` (no Gemini key required).
 

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       winner:
-        description: "Winning variant for demo_cta (writes public/experiment-defaults.json)"
+        description: "Winning variant for demo_cta (writes config/experiment-defaults.json; synced to public/ at build)"
         type: choice
         required: true
         default: "B"
@@ -47,7 +47,7 @@ jobs:
             echo
             echo "Winner: ${WINNER} for experiment demo_cta."
             echo
-            echo "Changed file: public/experiment-defaults.json (static app fetches it at runtime with cache: no-store)."
+            echo "Changed file: config/experiment-defaults.json (build copies to public/; app fetches with cache: no-store)."
             echo
             echo "Review and merge when ready."
           } > /tmp/pr-body.md
@@ -64,9 +64,9 @@ jobs:
           BRANCH="promote/demo-cta-${{ github.run_id }}"
           git checkout -b "$BRANCH"
 
-          git add public/experiment-defaults.json
+          git add config/experiment-defaults.json
           if git diff --cached --quiet; then
-            echo "::error::No diff after patch — is public/experiment-defaults.json tracked?"
+            echo "::error::No diff after patch — is config/experiment-defaults.json tracked?"
             exit 1
           fi
 

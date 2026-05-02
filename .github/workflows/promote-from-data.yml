@@ -1,0 +1,97 @@
+name: Promote from NDJSON data
+
+on:
+  workflow_dispatch:
+    inputs:
+      sessions:
+        description: "Synthetic sessions (need ≥400 for default MIN_PER_ARM=200 per arm)"
+        type: string
+        required: true
+        default: "800"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  decide-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Synthetic traffic
+        run: node scripts/simulate-traffic.mjs "${{ inputs.sessions }}" --fresh
+
+      - name: Decide winner
+        id: decide
+        run: |
+          set -euo pipefail
+          node scripts/decide-from-ndjson.mjs 2> /tmp/decide.err | tee /tmp/decide.out
+          cat /tmp/decide.err
+          WINNER=$(grep '^DECISION_WINNER=' /tmp/decide.out | tail -1 | cut -d= -f2-)
+          if [[ -z "${WINNER}" ]]; then
+            echo "::error::No DECISION_WINNER line (see logs above)"
+            exit 1
+          fi
+          echo "winner=${WINNER}" >> "${GITHUB_OUTPUT}"
+
+      - name: Patch canonical defaults
+        run: node scripts/patch-defaults.mjs "${{ steps.decide.outputs.winner }}"
+
+      - name: Write PR body
+        env:
+          WINNER: ${{ steps.decide.outputs.winner }}
+          SESSIONS: ${{ inputs.sessions }}
+        run: |
+          {
+            echo "Automated promotion from **promote-from-data.yml**."
+            echo
+            echo "- Synthetic sessions: **${SESSIONS}**"
+            echo "- Decided winner for \`demo_cta\`: **${WINNER}** (CTR + SRM + rage guardrails; see \`scripts/decide-from-ndjson.mjs\`)."
+            echo "- Canonical file: **config/experiment-defaults.json** (synced to \`public/\` at build time)."
+            echo
+            echo "Review and merge when ready."
+          } > /tmp/pr-body.md
+
+      - name: Commit, push, open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WINNER: ${{ steps.decide.outputs.winner }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="promote/from-data-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+
+          git add config/experiment-defaults.json
+          if git diff --cached --quiet; then
+            echo "::error::No diff after patch — is config/experiment-defaults.json tracked?"
+            exit 1
+          fi
+
+          git commit -m "chore(experiments): promote demo_cta → ${WINNER} (from data)"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "${BRANCH}" \
+            --title "chore(experiments): promote demo_cta → variant ${WINNER} (data-driven)" \
+            --body-file /tmp/pr-body.md

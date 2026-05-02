@@ -1,4 +1,4 @@
 # Config (PR-bot target)
 
-- **`experiment-defaults.example.json`** — duplicate to `experiment-defaults.json` (gitignored if you want) and teach your CI to patch **only** this file when an experiment wins.
-- Today, variant assignment still lives in `src/experiment.ts` (client-side hash). Moving winners here is the natural “promotion” step once you add a small loader or build-time embed.
+- **`experiment-defaults.json`** — canonical defaults for `demo_cta` (tracked). Promote workflows and `scripts/patch-defaults.mjs` update this file; **`scripts/sync-config-to-public.mjs`** copies it to `public/experiment-defaults.json` before dev/build (`public/` copy is gitignored).
+- **`experiment-defaults.example.json`** — starting shape if you fork and want a template without real values.

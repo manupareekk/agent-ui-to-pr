@@ -1,8 +1,10 @@
 import type { DemoEvent } from "../experiment.js";
+import { getSessionId } from "../session.js";
 
 type PostHog = {
   init: (key: string, options: { api_host: string; person_profiles?: string }) => void;
   capture: (event: string, props?: Record<string, unknown>) => void;
+  identify?: (distinctId: string) => void;
 };
 
 let posthog: PostHog | null = null;
@@ -20,6 +22,7 @@ export async function initPosthogFromEnv(): Promise<void> {
       api_host: import.meta.env.VITE_POSTHOG_HOST?.trim() || "https://us.i.posthog.com",
       person_profiles: "identified_only",
     });
+    posthog.identify?.(getSessionId());
   } catch (e) {
     loadFailed = true;
     console.warn("[posthog] install dependency: npm i posthog-js", e);

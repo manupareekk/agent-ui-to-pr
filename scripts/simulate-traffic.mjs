@@ -7,6 +7,7 @@
  *   node scripts/simulate-traffic.mjs 5000 --fresh
  *
  * B is slightly more likely to "click" so tables usually favor B (toy winner for demos).
+ * Rage events are deterministic per arm so offline `decide-from-ndjson` guardrails stay stable in CI.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -31,6 +32,7 @@ for (let i = 0; i < n; i++) {
   const variant = i % 2 === 0 ? "A" : "B";
   const sessionId = `sim_${i}`;
   const ts = () => new Date(base + i).toISOString();
+  const armIndex = variant === "A" ? Math.floor(i / 2) : Math.floor((i - 1) / 2);
 
   lines.push(
     JSON.stringify({
@@ -52,6 +54,21 @@ for (let i = 0; i < n; i++) {
         sessionId,
         name: "a2ui_action",
         payload: { name: "primary_cta", assignment: "client", synthetic: true },
+      }),
+    );
+  }
+
+  /** Deterministic rage counts per arm so `decide-from-ndjson` guardrails are stable in CI. */
+  const rageEvery = variant === "A" ? 17 : 18;
+  if (armIndex > 0 && armIndex % rageEvery === 0) {
+    lines.push(
+      JSON.stringify({
+        ts: ts(),
+        experiment: "demo_cta",
+        variant,
+        sessionId,
+        name: "rage_proxy",
+        payload: { synthetic: true },
       }),
     );
   }

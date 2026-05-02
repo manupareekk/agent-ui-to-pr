@@ -1,21 +1,27 @@
 /**
  * Minimal experiment harness: sticky A/B assignment + structured event log.
- * Sinks live in `src/integrations/` (PostHog, HTTP ingest, Statsig placeholder).
+ * Sinks live in `src/integrations/` (PostHog, HTTP ingest, Statsig).
  */
 
 import { forwardExperimentEvent } from "./integrations/index.js";
+import { getStatsigForcedVariant } from "./integrations/statsig.js";
+import { getSessionId } from "./session.js";
+
+export { getSessionId } from "./session.js";
 
 const STORAGE_KEY = "a2ui-demo-experiment-demo_cta";
 
 export type DemoVariant = "A" | "B";
 
-/** When set from `public/experiment-defaults.json`, all users get this variant. */
+/** When set from synced `config/experiment-defaults.json` → public, all users get this variant. */
 let remoteWinner: DemoVariant | null = null;
 
 /** Fetch once; call from app shell before first `getAssignedVariant()`. */
 export async function loadExperimentDefaults(): Promise<void> {
   try {
-    const res = await fetch("/experiment-defaults.json", { cache: "no-store" });
+    const res = await fetch(`${import.meta.env.BASE_URL}experiment-defaults.json`, {
+      cache: "no-store",
+    });
     if (!res.ok) return;
     const json = (await res.json()) as { demo_cta?: { winner?: string | null } };
     const w = json?.demo_cta?.winner;
@@ -25,8 +31,10 @@ export async function loadExperimentDefaults(): Promise<void> {
   }
 }
 
-export function getAssignmentMode(): "remote" | "client" {
-  return remoteWinner ? "remote" : "client";
+export function getAssignmentMode(): "remote" | "statsig" | "client" {
+  if (remoteWinner) return "remote";
+  if (getStatsigForcedVariant()) return "statsig";
+  return "client";
 }
 
 function stableHash(s: string): number {
@@ -38,23 +46,11 @@ function stableHash(s: string): number {
   return h >>> 0;
 }
 
-export function getSessionId(): string {
-  try {
-    const k = "a2ui-demo-session";
-    let id = sessionStorage.getItem(k);
-    if (!id) {
-      id = `sess_${crypto.randomUUID?.() ?? String(Date.now())}`;
-      sessionStorage.setItem(k, id);
-    }
-    return id;
-  } catch {
-    return `sess_${Date.now()}`;
-  }
-}
-
-/** Sticky assignment for experiment `demo_cta` (50/50 A/B), unless repo default wins. */
+/** Sticky assignment for experiment `demo_cta` (50/50 A/B), unless remote or Statsig wins. */
 export function getAssignedVariant(): DemoVariant {
   if (remoteWinner) return remoteWinner;
+  const sg = getStatsigForcedVariant();
+  if (sg) return sg;
   try {
     const existing = localStorage.getItem(STORAGE_KEY) as DemoVariant | null;
     if (existing === "A" || existing === "B") return existing;

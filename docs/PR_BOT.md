@@ -10,10 +10,10 @@
 
 **`.github/workflows/promote-experiment.yml`** — run manually (**Actions → Promote experiment PR → Run workflow**), pick **A** or **B**. It:
 
-1. Runs `node scripts/patch-defaults.mjs <winner>` (updates `public/experiment-defaults.json`).
+1. Runs `node scripts/patch-defaults.mjs <winner>` (updates `config/experiment-defaults.json` and copies to `public/` via `scripts/sync-config-to-public.mjs`).
 2. Pushes branch `promote/demo-cta-<run_id>` and opens a **pull request** to `main` using `gh` + `github.token`.
 
-After merge + deploy, the static app fetches `/experiment-defaults.json` with `cache: no-store` and forces that variant for everyone (see `loadExperimentDefaults()` in `src/experiment.ts`).
+After merge + deploy, the static app fetches `experiment-defaults.json` under `import.meta.env.BASE_URL` with `cache: no-store` and forces that variant for everyone (see `loadExperimentDefaults()` in `src/experiment.ts`). GitHub Pages sets `VITE_BASE_PATH=/<repository-name>/` in **`.github/workflows/pages.yml`**.
 
 ### Local patch (no PR)
 

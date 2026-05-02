@@ -13,6 +13,8 @@ import {
   type DemoVariant,
 } from "./experiment.js";
 import { initPosthogFromEnv } from "./integrations/posthog.js";
+import { initStatsigFromEnv } from "./integrations/statsig.js";
+import { getSessionId } from "./session.js";
 
 import type { ComponentApi, SurfaceModel } from "@a2ui/web_core/v0_9";
 
@@ -89,7 +91,8 @@ export class ExperimentHost extends LitElement {
 
   connectedCallback(): void {
     super.connectedCallback();
-    void loadExperimentDefaults().then(() => {
+    void loadExperimentDefaults().then(async () => {
+      await initStatsigFromEnv(getSessionId());
       this.variant = getAssignedVariant();
       injectBasicCatalogStyles();
       void initPosthogFromEnv();
