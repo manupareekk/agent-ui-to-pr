@@ -24,7 +24,7 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 - **Integration placeholders** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig stub. Wire env vars from **`.env.example`**.
 - **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
-- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** — `workflow_dispatch` picks **A** or **B**, patches **`public/experiment-defaults.json`**, opens a real PR (uses `github.token`). See **`docs/PR_BOT.md`**.
+- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`public/experiment-defaults.json`**, opens a real PR. If it 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
 - **Config example**: **`config/`** for future bot-targeted JSON beyond the static `public/` file.
 - **Static demo messages** in `src/demoMessages.ts` (no Gemini key required).
 

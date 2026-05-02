@@ -1,4 +1,4 @@
-name: promote experiment (open PR)
+name: Promote experiment PR
 
 on:
   workflow_dispatch:
@@ -16,13 +16,20 @@ permissions:
   contents: write
   pull-requests: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   open-promote-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
+          token: ${{ github.token }}
 
       - uses: actions/setup-node@v4
         with:
@@ -31,30 +38,44 @@ jobs:
       - name: Patch defaults JSON
         run: node scripts/patch-defaults.mjs "${{ inputs.winner }}"
 
-      - name: Open pull request
+      - name: Write PR body
+        env:
+          WINNER: ${{ inputs.winner }}
+        run: |
+          {
+            echo "Automated promotion (workflow: promote-experiment.yml)."
+            echo
+            echo "Winner: ${WINNER} for experiment demo_cta."
+            echo
+            echo "Changed file: public/experiment-defaults.json (static app fetches it at runtime with cache: no-store)."
+            echo
+            echo "Review and merge when ready."
+          } > /tmp/pr-body.md
+
+      - name: Commit, push, open PR
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
+          WINNER: ${{ inputs.winner }}
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           BRANCH="promote/demo-cta-${{ github.run_id }}"
           git checkout -b "$BRANCH"
+
           git add public/experiment-defaults.json
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "::error::No diff after patch — is public/experiment-defaults.json tracked?"
             exit 1
           fi
-          git commit -m "chore(experiments): set demo_cta winner to ${{ inputs.winner }}"
-          git push origin "$BRANCH"
+
+          git commit -m "chore(experiments): set demo_cta winner to ${WINNER}"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+
           gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "chore(experiments): promote demo_cta → variant ${{ inputs.winner }}" \
-            --body "Automated promotion (workflow: \`promote-experiment.yml\`).
-
-**Winner:** \`${{ inputs.winner }}\` for experiment \`demo_cta\`.
-
-**Change:** \`public/experiment-defaults.json\` — the static app fetches this at runtime (\`cache: no-store\`) so new sessions follow the default after deploy.
-
-Review and merge when ready."
+            --repo "${{ github.repository }}" \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "${BRANCH}" \
+            --title "chore(experiments): promote demo_cta → variant ${WINNER}" \
+            --body-file /tmp/pr-body.md
