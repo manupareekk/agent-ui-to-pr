@@ -20,8 +20,17 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 ## What is included today
 
 - **A2UI v0.9** surface using `MessageProcessor` + `basicCatalog` (`@a2ui/lit`, `@a2ui/web_core`).
-- **Experiment hook**: `getAssignedVariant()` + `logEvent()` in `src/experiment.ts` (localStorage sticky split). **Replace** with PostHog / Statsig / your collector when you are ready.
+- **Experiment hook**: `getAssignedVariant()` + `logEvent()` in `src/experiment.ts` (localStorage sticky split).
+- **Integration placeholders** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig stub. Wire env vars from **`.env.example`**.
+- **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
+- **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
+- **CI / PR placeholders**: **`.github/workflows/experiment-decision.yml`**, **`docs/PR_BOT.md`**, **`scripts/open-pr-placeholder.mjs`**, **`config/`** example for bot-targeted JSON.
 - **Static demo messages** in `src/demoMessages.ts` (no Gemini key required).
+
+## Wiring guides
+
+- **[docs/INTEGRATIONS.md](./docs/INTEGRATIONS.md)** — PostHog, ingest URL, Statsig extension point.
+- **[docs/PR_BOT.md](./docs/PR_BOT.md)** — how to replace placeholders with a real GitHub App / `gh` flow.
 
 ## Roadmap (KPI → PR)
 

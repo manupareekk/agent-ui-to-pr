@@ -1,7 +1,9 @@
 /**
  * Minimal experiment harness: sticky A/B assignment + structured event log.
- * Swap `logEvent` for PostHog / Statsig / your API when you wire production.
+ * Sinks live in `src/integrations/` (PostHog, HTTP ingest, Statsig placeholder).
  */
+
+import { forwardExperimentEvent } from "./integrations/index.js";
 
 const STORAGE_KEY = "a2ui-demo-experiment-demo_cta";
 
@@ -70,6 +72,7 @@ export function logEvent(name: string, payload?: Record<string, unknown>): void 
   };
   buffer.push(ev);
   console.info("[experiment]", ev);
+  forwardExperimentEvent(ev);
 }
 
 export function drainExperimentLog(): DemoEvent[] {

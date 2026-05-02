@@ -1,0 +1,7 @@
+{
+  "$comment": "Copy to experiment-defaults.json and let your PR bot update it. Wire experiment.ts to read this file (build-time import or runtime fetch) when you promote winners.",
+  "demo_cta": {
+    "winner": null,
+    "rolledOutAt": null
+  }
+}
