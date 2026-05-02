@@ -5,6 +5,7 @@ import { A2uiSurface, basicCatalog } from "@a2ui/lit/v0_9";
 import { injectBasicCatalogStyles } from "@a2ui/web_core/v0_9/basic_catalog";
 import { buildDemoMessages, SURFACE_ID } from "./demoMessages.js";
 import {
+  clearStickyAssignment,
   drainExperimentLog,
   getAssignedVariant,
   loadExperimentDefaults,
@@ -58,6 +59,16 @@ export class ExperimentHost extends LitElement {
       padding: 1rem;
       background: #fff;
     }
+    button.linkish {
+      margin-top: 0.5rem;
+      border: none;
+      background: none;
+      color: #0369a1;
+      text-decoration: underline;
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+    }
   `;
 
   private processor = new MessageProcessor([basicCatalog], (action) => {
@@ -108,6 +119,16 @@ export class ExperimentHost extends LitElement {
           <code>.env</code>, run <code>npm run dev:full</code> for local NDJSON ingest — see
           <code>docs/INTEGRATIONS.md</code>.
         </p>
+        <button
+          type="button"
+          class="linkish"
+          @click=${() => {
+            clearStickyAssignment();
+            location.reload();
+          }}
+        >
+          Re-roll my variant (clears sticky A/B, page reload)
+        </button>
       </header>
       ${this.surface
         ? html`<a2ui-surface .surface=${this.surface}></a2ui-surface>`

@@ -99,3 +99,12 @@ export function logEvent(name: string, payload?: Record<string, unknown>): void 
 export function drainExperimentLog(): DemoEvent[] {
   return buffer.slice();
 }
+
+/** Clears sticky A/B so the next load re-randomizes (local testing only). */
+export function clearStickyAssignment(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}

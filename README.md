@@ -4,14 +4,23 @@ A **small, deployable** demo: [Google A2UI](https://a2ui.org/) (official `@a2ui/
 
 This repo is **not** a fork of [google/A2UI](https://github.com/google/A2UI). It **depends on** published npm packages and documents how to grow from here.
 
-## Quick start
+## Use it in 60 seconds (no browser required)
+
+```bash
+npm install
+npm run demo:report
+```
+
+That **fabricates a few thousand fake sessions** into `data/events.ndjson`, then prints **variant tables** (B usually wins on clicks — it’s rigged slightly for demos). Real traffic: use `npm run dev:full` + `.env` instead; see below.
+
+## Quick start (UI)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL Vite prints (default **http://localhost:5180**). You should see an A2UI surface and a **Variant A / B** pill (sticky assignment). Click the primary button and watch the browser console for `[experiment]` lines.
+Open the URL Vite prints (default **http://localhost:5180**). You should see an A2UI surface and a **Variant A / B** pill (sticky assignment). Click the primary button and watch the browser console for `[experiment]` lines. Use **“Re-roll my variant”** if you’re stuck on one arm while testing.
 
 ### Deploy (Vercel)
 
@@ -24,6 +33,7 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 - **Integration placeholders** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig stub. Wire env vars from **`.env.example`**.
 - **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
+- **Synthetic traffic**: **`npm run demo:synth`** / **`npm run demo:report`** — generate NDJSON + analyze without the UI (see **`scripts/simulate-traffic.mjs`**).
 - **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`public/experiment-defaults.json`**, opens a real PR. If it 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
 - **Config example**: **`config/`** for future bot-targeted JSON beyond the static `public/` file.
 - **Static demo messages** in `src/demoMessages.ts` (no Gemini key required).
