@@ -4,6 +4,7 @@ import { MessageProcessor } from "@a2ui/web_core/v0_9";
 import { A2uiSurface, basicCatalog } from "@a2ui/lit/v0_9";
 import { injectBasicCatalogStyles } from "@a2ui/web_core/v0_9/basic_catalog";
 import { buildDemoMessages, SURFACE_ID } from "./demoMessages.js";
+import { getCohortId } from "./cohort.js";
 import {
   clearStickyAssignment,
   drainExperimentLog,
@@ -47,6 +48,11 @@ export class ExperimentHost extends LitElement {
       margin-left: 0.35rem;
       background: #fae8ff;
       color: #6b21a8;
+    }
+    .cohort-pill {
+      margin-left: 0.35rem;
+      background: #fff7ed;
+      color: #9a3412;
     }
     .panel {
       border: 1px solid #e2e8f0;
@@ -98,6 +104,9 @@ export class ExperimentHost extends LitElement {
   @state()
   private patternLabel = "";
 
+  @state()
+  private cohortLabel: string | null = null;
+
   connectedCallback(): void {
     super.connectedCallback();
     void loadExperimentDefaults()
@@ -107,6 +116,7 @@ export class ExperimentHost extends LitElement {
         this.variant = getAssignedVariant();
         const pattern = resolvePatternChoice("confirm_surface");
         this.patternLabel = `${pattern.templateId} · seg ${pattern.segmentId}${pattern.exploration ? " · explore" : ""}`;
+        this.cohortLabel = getCohortId();
         injectBasicCatalogStyles();
         void initPosthogFromEnv();
 
@@ -132,11 +142,16 @@ export class ExperimentHost extends LitElement {
       <header>
         <span class="pill">Variant ${this.variant}</span>
         <span class="pill pattern-pill">${this.patternLabel}</span>
+        ${this.cohortLabel
+          ? html`<span class="pill cohort-pill">cohort ${this.cohortLabel}</span>`
+          : null}
         <p style="margin:0.5rem 0 0;color:#475569;font-size:0.95rem;">
           A/B label plus <strong>UI pattern taxonomy</strong> (<code>template_id</code>,
           <code>segment_id</code>, <code>surface_kind</code>) on every event — see
           <code>config/ui-pattern-policy.json</code> and <code>scripts/decide-pattern-winners.mjs</code>.
-          Open the console for <code>[experiment]</code> lines. Optional: copy
+          Optional cohort: <code>?cohort=beta</code> (slug, 1–64 chars). Backend agents: run
+          <code>npm run dev:policy</code> and <code>GET /api/policy-snapshot</code>. Open the console for
+          <code>[experiment]</code> lines. Optional: copy
           <code>.env.example</code> → <code>.env</code>, run <code>npm run dev:full</code> for local NDJSON
           ingest — <code>docs/INTEGRATIONS.md</code>.
         </p>

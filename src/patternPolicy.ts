@@ -3,6 +3,7 @@
  * Policy JSON is synced from config/ → public/ (see scripts/sync-config-to-public.mjs).
  */
 
+import { getCohortId } from "./cohort.js";
 import { getSessionId } from "./session.js";
 
 export type PatternFamilyId = "confirm_surface";
@@ -59,7 +60,8 @@ export async function loadPatternPolicy(): Promise<void> {
 export function getSegmentId(sessionId: string): string {
   const policy = cachedPolicy;
   const n = policy?.segmentCount && policy.segmentCount > 0 ? Math.floor(policy.segmentCount) : 4;
-  return String(stableHash(sessionId) % n);
+  const cohort = getCohortId() ?? "anon";
+  return String(stableHash(`${cohort}:${sessionId}`) % n);
 }
 
 function chromePackFromTemplateId(templateId: string): string {
@@ -141,6 +143,7 @@ export function resolvePatternChoice(family: PatternFamilyId): {
 
 export function getActivePatternLogFields(): Record<string, unknown> {
   if (!activeLogFields) return {};
+  const cohort = getCohortId();
   return {
     surface_kind: activeLogFields.surfaceKind,
     template_id: activeLogFields.templateId,
@@ -148,6 +151,7 @@ export function getActivePatternLogFields(): Record<string, unknown> {
     pattern_family: activeLogFields.patternFamily,
     segment_id: activeLogFields.segmentId,
     pattern_exploration: activeLogFields.exploration,
+    ...(cohort ? { cohort_id: cohort } : {}),
   };
 }
 

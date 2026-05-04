@@ -3,6 +3,8 @@
  * Point the browser at it with VITE_EVENTS_INGEST_URL=http://127.0.0.1:3847/events
  *
  * Run: npm run dev:ingest   (or npm run dev:full with the Vite app)
+ *
+ * Optional: INGEST_REDACT_KEYS=email,phone strips those keys from the top-level event and from payload before append.
  */
 import http from "node:http";
 import fs from "node:fs";
@@ -14,6 +16,21 @@ const root = path.join(__dirname, "..");
 const dataFile = path.join(root, "data", "events.ndjson");
 const port = Number(process.env.INGEST_PORT || 3847);
 const maxBodyBytes = Number(process.env.INGEST_MAX_BODY_BYTES || 262144);
+const redactKeys = (process.env.INGEST_REDACT_KEYS || "")
+  .split(",")
+  .map((k) => k.trim())
+  .filter(Boolean);
+
+function redactEvent(obj) {
+  if (!redactKeys.length || !obj || typeof obj !== "object") return obj;
+  for (const k of redactKeys) {
+    if (k in obj) delete obj[k];
+    if (obj.payload && typeof obj.payload === "object" && k in obj.payload) {
+      delete obj.payload[k];
+    }
+  }
+  return obj;
+}
 
 function cors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -56,9 +73,11 @@ const server = http.createServer((req, res) => {
           res.end("empty body");
           return;
         }
-        JSON.parse(raw);
+        const obj = JSON.parse(raw);
+        redactEvent(obj);
+        const line = JSON.stringify(obj);
         fs.mkdirSync(path.dirname(dataFile), { recursive: true });
-        fs.appendFileSync(dataFile, raw + "\n", "utf8");
+        fs.appendFileSync(dataFile, line + "\n", "utf8");
         res.writeHead(204);
         res.end();
       } catch (e) {

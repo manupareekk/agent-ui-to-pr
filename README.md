@@ -28,15 +28,21 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 
 ### CI and GitHub Pages
 
-- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci` then **`npm run verify`** (see `scripts/verify.mjs` — default build, second build with `VERIFY_VITE_BASE` / repo name for Pages URLs, then **`npm run demo:report`** + **`npm run demo:patterns`**).
+- **CI** (`.github/workflows/ci.yml`) on every push/PR: **`verify`** job (`npm ci` + **`npm run verify`** — builds, **`demo:report`**, **`demo:patterns`**, **`validate:config`**), **`actionlint`** on workflows, and **`e2e`** (**`npm run test:e2e`** with Playwright + `webServer` Vite).
 - **Pages** (`.github/workflows/pages.yml`) is **`workflow_dispatch` only** so `main` stays green until you enable **Settings → Pages → GitHub Actions** and run **“Deploy GitHub Pages”** manually once.
+
+### Backend agent hook + streaming demo
+
+- **`npm run dev:policy`** → **`http://127.0.0.1:3890/api/policy-snapshot`**: merges `config/experiment-defaults.json` + `config/ui-pattern-policy.json` and returns **`suggested_system_prompt_slice`** for attaching to your model call (see **`server/policy-context.mjs`**).
+- **`npm run dev:stream`** → **`http://127.0.0.1:3891/stream`**: minimal **SSE** with two A2UI-shaped JSON chunks (see **`server/stream-surface.mjs`**).
 
 ## What is included today
 
 - **A2UI v0.9** surface using `MessageProcessor` + `basicCatalog` (`@a2ui/lit`, `@a2ui/web_core`).
 - **Experiment hook**: `getAssignedVariant()` + `logEvent()` in `src/experiment.ts` (localStorage sticky split).
 - **Integrations** in **`src/integrations/`** — PostHog (`posthog-js`), HTTP POST to any ingest URL, Statsig (`@statsig/js-client` when `VITE_STATSIG_CLIENT_KEY` is set). Wire env vars from **`.env.example`**.
-- **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
+- **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`** (optional **`INGEST_REDACT_KEYS`**). Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
+- **Optional cohort**: URL **`?cohort=beta`** (slug) → logged as **`cohort_id`** and folded into segment hashing (`src/cohort.ts`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
 - **Synthetic traffic**: **`npm run demo:synth`** / **`npm run demo:report`** — generate NDJSON + analyze without the UI (see **`scripts/simulate-traffic.mjs`**).
 - **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`config/experiment-defaults.json`** (synced to `public/` on `npm run dev` / `build`), opens a real PR. **`.github/workflows/promote-from-data.yml`** runs synthetic traffic + **`scripts/decide-from-ndjson.mjs`** (min-`n`, SRM, rage guardrail) then opens the same style of PR. **`.github/workflows/promote-pattern-from-data.yml`** does the same for **`config/ui-pattern-policy.json`** (per-segment `segmentWinners` via **`scripts/decide-pattern-winners.mjs --apply`**). If Actions 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).

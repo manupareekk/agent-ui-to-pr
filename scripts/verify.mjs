@@ -40,5 +40,6 @@ npmRun("build", { VITE_BASE_PATH: withTrailingSlash(baseRaw) });
 
 npmRun("demo:report");
 npmRun("demo:patterns");
+npmRun("validate:config");
 
 console.error("\nverify: all checks passed\n");

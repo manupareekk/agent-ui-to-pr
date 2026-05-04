@@ -7,4 +7,4 @@ This starter uses **static** `MessageProcessor.processMessages(...)` in `src/mai
 3. **Experiment events** — Keep `logEvent` at meaningful boundaries (`surface_exposed` once the surface is first shown; `a2ui_action` on user actions). Include `variant` and `sessionId` on every event so NDJSON ingest and `scripts/decide-from-ndjson.mjs` stay valid.
 4. **Server** — A small relay that forwards the model stream to the browser and optionally mirrors structured lines to `server/ingest.mjs` closes the loop with the same KPI → PR tooling.
 
-No extra code ships here so the demo stays a single static bundle; copy `ExperimentHost` and swap the message source when you wire streaming.
+**Concrete demos in this repo:** run **`npm run dev:stream`** for a minimal **SSE** endpoint (`server/stream-surface.mjs`); run **`npm run dev:policy`** for **`GET /api/policy-snapshot`** to attach policy text to your agent backend (`server/policy-context.mjs`). The main Vite app stays static; copy `ExperimentHost` and swap the message source when you wire streaming.

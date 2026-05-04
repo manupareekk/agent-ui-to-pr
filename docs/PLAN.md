@@ -12,7 +12,7 @@ This document is the **roadmap** you can attach to issues or a LinkedIn post. Ea
 
 ## Still your product layer (not this static host)
 
-- **Attach policy to your backend agent** (prompt context, router JSON, or **template slots** so the model never invents chrome unbounded). This repo produces the **measured `ui-pattern-policy.json` artifact** + PR automation; it does not call your LLM.
+- **Attach policy to your backend agent** (prompt context, router JSON, or **template slots** so the model never invents chrome unbounded). This repo ships **`server/policy-context.mjs`** (`GET /api/policy-snapshot` + `suggested_system_prompt_slice`) as a concrete hook; your LLM service still owns the call.
 - **Richer cohorts / bandits** than hash segments + epsilon exploration—extend the policy schema and assignment code when you need them.
 
 ## Phase 1 — Real product telemetry

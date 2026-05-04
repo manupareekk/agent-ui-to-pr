@@ -4,6 +4,10 @@ dist/
 .DS_Store
 _tmp_*.json
 data/
+test-results/
+playwright-report/
+playwright/.cache/
+/actionlint
 # Generated from config/*.json by scripts/sync-config-to-public.mjs
 public/experiment-defaults.json
 public/ui-pattern-policy.json
