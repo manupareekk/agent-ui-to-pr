@@ -115,7 +115,7 @@ export class ExperimentHost extends LitElement {
         await initStatsigFromEnv(getSessionId());
         this.variant = getAssignedVariant();
         const pattern = resolvePatternChoice("confirm_surface");
-        this.patternLabel = `${pattern.templateId} · seg ${pattern.segmentId}${pattern.exploration ? " · explore" : ""}`;
+        this.patternLabel = `${pattern.chromePack} · ${pattern.templateId} · seg ${pattern.segmentId}${pattern.exploration ? " · explore" : ""}`;
         this.cohortLabel = getCohortId();
         injectBasicCatalogStyles();
         void initPosthogFromEnv();
@@ -127,7 +127,11 @@ export class ExperimentHost extends LitElement {
         });
 
         this.processor.processMessages(
-          buildDemoMessages(this.variant, pattern.templateId) as never[],
+          buildDemoMessages(this.variant, {
+            templateId: pattern.templateId,
+            chromePack: pattern.chromePack,
+            segmentId: pattern.segmentId,
+          }) as never[],
         );
         logEvent("surface_exposed", { surfaceId: SURFACE_ID });
         this.requestUpdate();
