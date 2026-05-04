@@ -1,0 +1,17 @@
+{
+  "updatedAt": "2026-05-02T00:00:00.000Z",
+  "explorationRate": 0.1,
+  "segmentCount": 4,
+  "families": {
+    "confirm_surface": {
+      "templates": ["flag_modal_v1", "sheet_v1"],
+      "segmentWinners": {
+        "default": "flag_modal_v1",
+        "0": "flag_modal_v1",
+        "1": "flag_modal_v1",
+        "2": "sheet_v1",
+        "3": "sheet_v1"
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@ import {
   logEvent,
   type DemoVariant,
 } from "./experiment.js";
+import { loadPatternPolicy, resolvePatternChoice } from "./patternPolicy.js";
 import { initPosthogFromEnv } from "./integrations/posthog.js";
 import { initStatsigFromEnv } from "./integrations/statsig.js";
 import { getSessionId } from "./session.js";
@@ -41,6 +42,11 @@ export class ExperimentHost extends LitElement {
       color: #075985;
       font-size: 0.8rem;
       font-weight: 600;
+    }
+    .pattern-pill {
+      margin-left: 0.35rem;
+      background: #fae8ff;
+      color: #6b21a8;
     }
     .panel {
       border: 1px solid #e2e8f0;
@@ -89,24 +95,33 @@ export class ExperimentHost extends LitElement {
   @state()
   private variant: DemoVariant | null = null;
 
+  @state()
+  private patternLabel = "";
+
   connectedCallback(): void {
     super.connectedCallback();
-    void loadExperimentDefaults().then(async () => {
-      await initStatsigFromEnv(getSessionId());
-      this.variant = getAssignedVariant();
-      injectBasicCatalogStyles();
-      void initPosthogFromEnv();
+    void loadExperimentDefaults()
+      .then(() => loadPatternPolicy())
+      .then(async () => {
+        await initStatsigFromEnv(getSessionId());
+        this.variant = getAssignedVariant();
+        const pattern = resolvePatternChoice("confirm_surface");
+        this.patternLabel = `${pattern.templateId} · seg ${pattern.segmentId}${pattern.exploration ? " · explore" : ""}`;
+        injectBasicCatalogStyles();
+        void initPosthogFromEnv();
 
-      this.processor.onSurfaceCreated((s) => {
-        if (s.id === SURFACE_ID) {
-          this.surface = s as SurfaceModel<ComponentApi>;
-        }
+        this.processor.onSurfaceCreated((s) => {
+          if (s.id === SURFACE_ID) {
+            this.surface = s as SurfaceModel<ComponentApi>;
+          }
+        });
+
+        this.processor.processMessages(
+          buildDemoMessages(this.variant, pattern.templateId) as never[],
+        );
+        logEvent("surface_exposed", { surfaceId: SURFACE_ID });
+        this.requestUpdate();
       });
-
-      this.processor.processMessages(buildDemoMessages(this.variant) as never[]);
-      logEvent("surface_exposed", { surfaceId: SURFACE_ID });
-      this.requestUpdate();
-    });
   }
 
   render() {
@@ -116,11 +131,14 @@ export class ExperimentHost extends LitElement {
     return html`
       <header>
         <span class="pill">Variant ${this.variant}</span>
+        <span class="pill pattern-pill">${this.patternLabel}</span>
         <p style="margin:0.5rem 0 0;color:#475569;font-size:0.95rem;">
-          Same A2UI surface; only the primary button label changes. Open the console for
-          <code>[experiment]</code> lines. Optional: copy <code>.env.example</code> →
-          <code>.env</code>, run <code>npm run dev:full</code> for local NDJSON ingest — see
-          <code>docs/INTEGRATIONS.md</code>.
+          A/B label plus <strong>UI pattern taxonomy</strong> (<code>template_id</code>,
+          <code>segment_id</code>, <code>surface_kind</code>) on every event — see
+          <code>config/ui-pattern-policy.json</code> and <code>scripts/decide-pattern-winners.mjs</code>.
+          Open the console for <code>[experiment]</code> lines. Optional: copy
+          <code>.env.example</code> → <code>.env</code>, run <code>npm run dev:full</code> for local NDJSON
+          ingest — <code>docs/INTEGRATIONS.md</code>.
         </p>
         <button
           type="button"
@@ -130,7 +148,7 @@ export class ExperimentHost extends LitElement {
             location.reload();
           }}
         >
-          Re-roll my variant (clears sticky A/B, page reload)
+          Re-roll (clears sticky A/B + pattern picks, reload)
         </button>
       </header>
       ${this.surface

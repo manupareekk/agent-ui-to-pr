@@ -20,7 +20,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (default **http://localhost:5180**). You should see an A2UI surface and a **Variant A / B** pill (sticky assignment). Click the primary button and watch the browser console for `[experiment]` lines. Use **“Re-roll my variant”** if you’re stuck on one arm while testing.
+Open the URL Vite prints (default **http://localhost:5180**). You should see an A2UI surface plus **Variant A/B** and **template_id / segment** pills (sticky assignment + pattern policy). Click the primary button and watch the browser console for `[experiment]` lines. Use **Re-roll** if you’re stuck on one arm or pattern while testing.
 
 ### Deploy (Vercel)
 
@@ -28,7 +28,7 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 
 ### CI and GitHub Pages
 
-- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci` then **`npm run verify`** (see `scripts/verify.mjs` — default build, second build with `VERIFY_VITE_BASE` / repo name for Pages URLs, then **`npm run demo:report`**).
+- **CI** (`.github/workflows/ci.yml`) runs on every push/PR: `npm ci` then **`npm run verify`** (see `scripts/verify.mjs` — default build, second build with `VERIFY_VITE_BASE` / repo name for Pages URLs, then **`npm run demo:report`** + **`npm run demo:patterns`**).
 - **Pages** (`.github/workflows/pages.yml`) is **`workflow_dispatch` only** so `main` stays green until you enable **Settings → Pages → GitHub Actions** and run **“Deploy GitHub Pages”** manually once.
 
 ## What is included today
@@ -39,8 +39,9 @@ From this directory: `npx vercel` (static output: `dist/`). A `vercel.json` is i
 - **Local event sink**: **`server/ingest.mjs`** appends JSON lines to **`data/events.ndjson`**. Run **`npm run dev:full`** (Vite + ingest) or two terminals (`dev` + `dev:ingest`).
 - **Offline rollup**: **`npm run analyze`** reads `data/events.ndjson` and prints simple tables.
 - **Synthetic traffic**: **`npm run demo:synth`** / **`npm run demo:report`** — generate NDJSON + analyze without the UI (see **`scripts/simulate-traffic.mjs`**).
-- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`config/experiment-defaults.json`** (synced to `public/` on `npm run dev` / `build`), opens a real PR. **`.github/workflows/promote-from-data.yml`** runs synthetic traffic + **`scripts/decide-from-ndjson.mjs`** (min-`n`, SRM, rage guardrail) then opens the same style of PR. If Actions 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
-- **Config example**: **`config/`** for future bot-targeted JSON beyond the static `public/` file.
+- **Promote PR workflow**: **`.github/workflows/promote-experiment.yml`** (Actions UI: **“Promote experiment PR”**) — `workflow_dispatch` picks **A** or **B**, patches **`config/experiment-defaults.json`** (synced to `public/` on `npm run dev` / `build`), opens a real PR. **`.github/workflows/promote-from-data.yml`** runs synthetic traffic + **`scripts/decide-from-ndjson.mjs`** (min-`n`, SRM, rage guardrail) then opens the same style of PR. **`.github/workflows/promote-pattern-from-data.yml`** does the same for **`config/ui-pattern-policy.json`** (per-segment `segmentWinners` via **`scripts/decide-pattern-winners.mjs --apply`**). If Actions 403s, enable **read/write** workflow permissions (see **`docs/PR_BOT.md`**).
+- **UI pattern layer**: **`config/ui-pattern-policy.json`** + **`src/patternPolicy.ts`** — segment hash, epsilon **exploration**, sticky template picks, first-class pattern fields on every event; **`npm run promote:patterns`** applies KPI winners locally after **`npm run demo:patterns`**.
+- **Config**: **`config/`** holds canonical JSON copied to **`public/`** at dev/build time (`scripts/sync-config-to-public.mjs`).
 - **Static demo messages** in `src/demoMessages.ts` (no Gemini key required).
 
 ## Wiring guides

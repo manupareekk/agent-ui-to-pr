@@ -4,5 +4,6 @@ dist/
 .DS_Store
 _tmp_*.json
 data/
-# Generated from config/experiment-defaults.json by scripts/sync-config-to-public.mjs
+# Generated from config/*.json by scripts/sync-config-to-public.mjs
 public/experiment-defaults.json
+public/ui-pattern-policy.json

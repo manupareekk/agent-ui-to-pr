@@ -39,5 +39,6 @@ const baseRaw =
 npmRun("build", { VITE_BASE_PATH: withTrailingSlash(baseRaw) });
 
 npmRun("demo:report");
+npmRun("demo:patterns");
 
 console.error("\nverify: all checks passed\n");

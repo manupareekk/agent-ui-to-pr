@@ -31,12 +31,17 @@ const byVariant = { A: 0, B: 0 };
 const exposures = { A: 0, B: 0 };
 const ctaClicks = { A: 0, B: 0 };
 const rage = { A: 0, B: 0 };
+const byTemplate = {};
 
 for (const ev of events) {
   const v = ev.variant;
   if (v !== "A" && v !== "B") continue;
   byVariant[v] = (byVariant[v] || 0) + 1;
-  if (ev.name === "surface_exposed") exposures[v]++;
+  if (ev.name === "surface_exposed") {
+    exposures[v]++;
+    const tid = ev.payload?.template_id;
+    if (tid) byTemplate[tid] = (byTemplate[tid] || 0) + 1;
+  }
   if (ev.name === "a2ui_action" && ev.payload?.name === "primary_cta") ctaClicks[v]++;
   if (ev.name === "rage_proxy") rage[v]++;
 }
@@ -45,6 +50,8 @@ console.log("--- Raw counts (all events with variant) ---");
 console.table(byVariant);
 console.log("--- surface_exposed (proxy for assignment seen in log stream) ---");
 console.table(exposures);
+console.log("--- surface_exposed by template_id ---");
+console.table(byTemplate);
 console.log("--- primary_cta clicks by variant ---");
 console.table(ctaClicks);
 console.log("--- rage_proxy by variant ---");

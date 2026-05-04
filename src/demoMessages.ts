@@ -3,9 +3,15 @@ import type { DemoVariant } from "./experiment.js";
 const CATALOG_ID = "https://a2ui.org/specification/v0_9/basic_catalog.json";
 const SURFACE_ID = "demo";
 
-/** Static A2UI v0.9 messages (two CTA label variants) — no LLM required for the demo. */
-export function buildDemoMessages(variant: DemoVariant): unknown[] {
+/** Static A2UI v0.9 messages — CTA label from A/B + chrome from `template_id` (logged as first-class dimensions). */
+export function buildDemoMessages(variant: DemoVariant, templateId: string): unknown[] {
   const ctaLabel = variant === "A" ? "Get started" : "Start free";
+
+  const isSheet = templateId === "sheet_v1";
+  const titleText = isSheet ? "Continue in your workspace" : "Confirm";
+  const subtitleText = isSheet
+    ? "Sheet-style pattern (template_id=sheet_v1): more copy, calmer chrome. Logged per segment for pattern winners."
+    : "Flag-style pattern (template_id=flag_modal_v1): short confirm. Same catalog; different template for CTR splits.";
 
   return [
     {
@@ -23,20 +29,20 @@ export function buildDemoMessages(variant: DemoVariant): unknown[] {
           {
             id: "root",
             component: "Column",
-            children: ["title", "subtitle", "cta"],
+            children: ["title", "subtitle", "ctaLabel", "cta"],
             justify: "start",
             align: "stretch",
           },
           {
             id: "title",
             component: "Text",
-            text: "A2UI + experiment starter",
+            text: titleText,
             variant: "h2",
           },
           {
             id: "subtitle",
             component: "Text",
-            text: "Structured agent UI (Google A2UI) with a tiny A/B hook and an event log. See docs/PLAN.md for the KPI → PR roadmap.",
+            text: subtitleText,
             variant: "body",
           },
           {
@@ -53,7 +59,7 @@ export function buildDemoMessages(variant: DemoVariant): unknown[] {
             action: {
               event: {
                 name: "primary_cta",
-                context: { variant },
+                context: { variant, templateId },
               },
             },
           },

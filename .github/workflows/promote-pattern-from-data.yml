@@ -1,0 +1,83 @@
+name: Promote UI pattern winners from data
+
+on:
+  workflow_dispatch:
+    inputs:
+      sessions:
+        description: "Synthetic sessions (pattern dimensions logged; need enough per segment×template)"
+        type: string
+        required: true
+        default: "800"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  decide-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          token: ${{ github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Synthetic traffic
+        run: node scripts/simulate-traffic.mjs "${{ inputs.sessions }}" --fresh
+
+      - name: Decide pattern winners and apply
+        run: |
+          set -euo pipefail
+          node scripts/decide-pattern-winners.mjs --apply
+
+      - name: Write PR body
+        env:
+          SESSIONS: ${{ inputs.sessions }}
+        run: |
+          {
+            echo "Automated **UI pattern policy** update from \`promote-pattern-from-data.yml\`."
+            echo
+            echo "- Synthetic sessions: **${SESSIONS}**"
+            echo "- Updated **\`config/ui-pattern-policy.json\`** (\`segmentWinners\` per segment for \`confirm_surface\`; see \`scripts/decide-pattern-winners.mjs\`)."
+            echo
+            echo "Review and merge when ready."
+          } > /tmp/pr-body.md
+
+      - name: Commit, push, open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="promote/patterns-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+
+          git add config/ui-pattern-policy.json
+          if git diff --cached --quiet; then
+            echo "::error::No diff after pattern apply"
+            exit 1
+          fi
+
+          git commit -m "chore(patterns): update segmentWinners from KPI data"
+          git push origin "HEAD:refs/heads/${BRANCH}"
+
+          gh pr create \
+            --repo "${{ github.repository }}" \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "${BRANCH}" \
+            --title "chore(patterns): promote UI pattern winners from data" \
+            --body-file /tmp/pr-body.md

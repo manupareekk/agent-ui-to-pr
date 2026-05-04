@@ -4,6 +4,7 @@
  */
 
 import { forwardExperimentEvent } from "./integrations/index.js";
+import { getActivePatternLogFields, clearPatternSticky } from "./patternPolicy.js";
 import { getStatsigForcedVariant } from "./integrations/statsig.js";
 import { getSessionId } from "./session.js";
 
@@ -85,7 +86,11 @@ export function logEvent(name: string, payload?: Record<string, unknown>): void 
     variant: getAssignedVariant(),
     sessionId: getSessionId(),
     name,
-    payload: { ...payload, assignment: getAssignmentMode() },
+    payload: {
+      ...getActivePatternLogFields(),
+      ...payload,
+      assignment: getAssignmentMode(),
+    },
   };
   buffer.push(ev);
   console.info("[experiment]", ev);
@@ -96,8 +101,9 @@ export function drainExperimentLog(): DemoEvent[] {
   return buffer.slice();
 }
 
-/** Clears sticky A/B so the next load re-randomizes (local testing only). */
+/** Clears sticky A/B and pattern choices so the next load re-randomizes (local testing only). */
 export function clearStickyAssignment(): void {
+  clearPatternSticky();
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
