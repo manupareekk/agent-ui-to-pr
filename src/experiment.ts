@@ -6,7 +6,7 @@
 import { forwardExperimentEvent } from "./integrations/index.js";
 import { getActivePatternLogFields, clearPatternSticky } from "./patternPolicy.js";
 import { getStatsigForcedVariant } from "./integrations/statsig.js";
-import { getSessionId } from "./session.js";
+import { getSessionId, resetSessionId } from "./session.js";
 
 export { getSessionId } from "./session.js";
 
@@ -101,9 +101,13 @@ export function drainExperimentLog(): DemoEvent[] {
   return buffer.slice();
 }
 
-/** Clears sticky A/B and pattern choices so the next load re-randomizes (local testing only). */
+/**
+ * Clears sticky A/B + pattern picks and **rotates the anonymous session id** so after reload
+ * variant / segment / template can change (otherwise hashes from the same sessionId repeat).
+ */
 export function clearStickyAssignment(): void {
   clearPatternSticky();
+  resetSessionId();
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {

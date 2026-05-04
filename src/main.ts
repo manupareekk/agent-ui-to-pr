@@ -163,7 +163,7 @@ export class ExperimentHost extends LitElement {
             location.reload();
           }}
         >
-          Re-roll (clears sticky A/B + pattern picks, reload)
+          Re-roll (new session id + clears A/B & pattern stickies, reload)
         </button>
       </header>
       ${this.surface
