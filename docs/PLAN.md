@@ -9,6 +9,19 @@ This document is the **roadmap** you can attach to issues or a LinkedIn post. Ea
 - **Structured logging** to the console + an on-page JSON dump (`logEvent`).
 - **Sink stubs**: PostHog + HTTP ingest + Statsig hook (`src/integrations/`), local **NDJSON** server (`server/ingest.mjs`), **analyzer** script, **`promote-experiment.yml`** / **`promote-from-data.yml`** (PR patching `config/experiment-defaults.json`), plus docs under `docs/`.
 
+## Beyond this starter (explicit gaps)
+
+These are **product decisions and layers** you add on top of the same logging + promotion spine—not missing “by accident,” just out of scope for a small reference repo.
+
+1. **Taxonomy of UI patterns** (“flag modal v3” vs “sheet”) as **first-class logged dimensions**  
+   The starter logs generic experiment events (`surface_exposed`, `a2ui_action`, etc.). To compare *pattern families*, you encode **stable IDs** in payloads (e.g. `surface_kind`, `template_id`, `chrome_pack`) everywhere the agent or host emits UI—otherwise analytics can’t aggregate apples-to-apples.
+
+2. **Automatic “feed winners into generation”** (backend prompt / template selection)  
+   Promotion today is **pick A or B** for the single `demo_cta` demo (defaults JSON). It is **not** yet “promote a **library** of winning patterns per cohort” or push policy into your model/router. The next step is usually: metrics → **policy artifact** (config, ranked templates, rules table) → **structured context** on the backend call (or **template slots** so the model fills content, not chrome).
+
+3. **Exploration vs exploitation, segments, template slots**  
+   Bandits, cohort rules, “10% explore,” and “model chooses only inside catalog X” are **policy engines** above this kit. The starter gives you assignment + logs + a blunt decide + PR hook; you swap in your own decisioning and config shape when you outgrow one global A/B.
+
 ## Phase 1 — Real product telemetry
 
 - Add stable **element / surface ids** on every meaningful interaction (already partially true via A2uiClientAction).
